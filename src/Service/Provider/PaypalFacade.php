@@ -3,6 +3,7 @@
 namespace App\Service\Provider;
 
 use App\Interface\IProviderStrategy;
+use App\Entity\TokenItem;
 use App\Interface\INotifyToken;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Interface\IProviderNotification;
@@ -26,9 +27,9 @@ class PaypalFacade implements IProviderStrategy, ICaptureable, INotifiable, IPro
     ) {
     }
 
-    public function process(Token ...$tokens): RedirectResponse
+    public function process(TokenItem ...$tokenItems): RedirectResponse
     {
-        $providerUrl = $this->providerUrlInstance->get(...$tokens);
+        $providerUrl = $this->providerUrlInstance->get(...$tokenItems);
         return new RedirectResponse($providerUrl);
     }
 
@@ -46,13 +47,12 @@ class PaypalFacade implements IProviderStrategy, ICaptureable, INotifiable, IPro
         return $this->notifyInstance->notify($request);
     }
 
-    public function isProviderNotification(Request $request): bool
+    public function isProviderNotification(Request $request, ?string $token): bool
     {
-        $token = $request->query->get('token');
         if ($token === null)
             return false;
 
-        $tokenEntity = $this->entityManager->getRepository(Token::class)->findOneBy(['token' => $token]);
+        $tokenEntity = $this->entityManager->getRepository(Token::class)->find($token);
         if ($tokenEntity === null)
             return false;
         

@@ -2,9 +2,9 @@
 
 namespace App\Interface;
 
-use App\Entity\Token;
+use App\Entity\TokenItem;
 
 interface IProviderUrl
 {
-    public function get(Token ...$tokens): string;
+    public function get(TokenItem ...$tokenItems): string;
 }

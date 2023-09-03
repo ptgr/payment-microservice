@@ -21,8 +21,8 @@ class NotifyController extends AbstractController
     ) {
     }
 
-    #[Route('/api/v1/payment/notify/{token}', name: 'capture')]
-    public function index(Request $request, ?string $token = null, ProviderStrategy $providerStrategy): JsonResponse
+    #[Route('/api/v1/payment/notify/{token}', name: 'notify')]
+    public function index(Request $request, ProviderStrategy $providerStrategy, ?string $token = null): JsonResponse
     {
         $processResult = null;
         try {
@@ -31,7 +31,7 @@ class NotifyController extends AbstractController
                 if (!$provider instanceof IProviderNotification)
                     continue;
 
-                $isProviderNotification = $provider->isProviderNotification($request);
+                $isProviderNotification = $provider->isProviderNotification($request, $token);
                 if (!$isProviderNotification)
                     continue;
                 

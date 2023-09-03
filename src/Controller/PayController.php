@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\TokenItem;
 use App\Enum\TokenStatus;
 use App\Service\ProviderStrategy;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,26 +22,26 @@ class PayController extends AbstractController
     }
 
     #[Route('/api/v1/payment/pay/{token}', name: 'pay', methods: ['GET'])]
-    public function pay(Request $request, string $token, ProviderStrategy $providerStrategy): RedirectResponse
+    public function pay(Request $request, ProviderStrategy $providerStrategy, ?Token $token = null): RedirectResponse
     {
         $processResult = null;
         try {
-            $tokenEntities = $this->entityManager->getRepository(Token::class)->findBy(['token' => $token]);
-            if (empty($tokenEntities)) {
-                $this->logger->warning("PAY - The token does not exists.", ['token' => $token]);
+            if ($token === null) {
+                $this->logger->warning("PAY - The token does not exists.");
                 return $this->redirect($this->getParameter('app.redirect_after_failure_payment'));
             }
 
-            if ($tokenEntities[0]->getStatus() !== TokenStatus::ACTIVE) {
-                $this->logger->warning("PAY - The token is not active.", ['token' => $token]);
+            if ($token->getStatus() !== TokenStatus::ACTIVE) {
+                $this->logger->warning("PAY - The token is not active.", ['token' => $token->getId()]);
                 return $this->redirect($this->getParameter('app.redirect_after_failure_payment'));
             }
 
-            $providerFacade = $providerStrategy->resolve($tokenEntities[0]->getMethod());
-            $processResult = $providerFacade->process(...$tokenEntities);
+            $providerFacade = $providerStrategy->resolve($token->getMethod());
+
+            $tokenItemsEntities = $this->entityManager->getRepository(TokenItem::class)->findBy(['token' => $token->getId()]);
+            $processResult = $providerFacade->process(...$tokenItemsEntities);
 
         } catch (\Throwable $th) {
-            // TODO: logs
             $this->logger->error($request->attributes->get('_route'), ['error' => $th->getMessage(), 'stack' => $th->getTraceAsString()]);
             return $this->redirect($this->getParameter('app.redirect_after_failure_payment'));
         }

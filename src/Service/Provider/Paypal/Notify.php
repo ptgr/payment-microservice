@@ -5,6 +5,7 @@ namespace App\Service\Provider\Paypal;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use App\Interface\INotifiable;
+use App\Enum\TokenStatus;
 use Symfony\Component\HttpClient\HttpClient;
 use App\Enum\PaymentStatus;
 use App\Entity\Payment;
@@ -31,17 +32,17 @@ class Notify implements INotifiable, INotifyToken
         if (!$this->isVerified($request->getContent()))
             throw new \RuntimeException("IPN verification failed " . $request->getContent());
 
-        $notifyItem = $request->toArray();
-        if (in_array($notifyItem['payment_status'], ['Reversed', 'Refunded'])) {
+        $notifyItem = $request->request->all();
+        if (in_array(strtolower($notifyItem['payment_status']), ['reversed', 'refunded'])) {
 
             $paymentEntity = $this->entityManager->getRepository(Payment::class)->findOneBy(['transaction_number' => $notifyItem['txn_id']]);
             $paymentEntity->setStatus(PaymentStatus::REFUNDED);
             $this->entityManager->flush();
         }
 
-        if ($notifyItem['payment_status'] === 'Completed') {
+        if (strtolower($notifyItem['payment_status']) === 'completed') {
 
-            $paymentEntityCount = $this->entityManager->getRepository(Payment::class)->count(['token' => $this->token->getToken()]);
+            $paymentEntityCount = $this->entityManager->getRepository(Payment::class)->count(['token' => $this->token->getId()]);
 
             if ($paymentEntityCount === 0) {
                 $paymentEntity = new Payment();
@@ -49,8 +50,15 @@ class Notify implements INotifiable, INotifyToken
                 $paymentEntity->setAmount($notifyItem['mc_gross']);
                 $paymentEntity->setTransactionNumber($notifyItem['txn_id']);
                 $paymentEntity->setStatus(PaymentStatus::CAPTURED);
+
+                $this->entityManager->persist($paymentEntity);
+                $this->entityManager->flush();
             }
         }
+
+        $this->token->setStatus(TokenStatus::EXPIRED);
+        $this->entityManager->persist($this->token);
+        $this->entityManager->flush();
 
         return new JsonResponse();
     }
@@ -65,7 +73,7 @@ class Notify implements INotifiable, INotifyToken
         $req = 'cmd=_notify-validate&' . $rawBody;
         $paypalUrl = $this->params->get("app.paypal_sandbox") ? self::SANDBOX_VERIFY_URI : self::VERIFY_URI;
 
-        $response = HttpClient::create()->request("POST", $paypalUrl, [
+        $response = HttpClient::create()->request(Request::METHOD_POST, $paypalUrl, [
             'headers' => [
                 'User-Agent' => 'PHP-IPN-Verification-Script',
                 'Connection' => 'Close',

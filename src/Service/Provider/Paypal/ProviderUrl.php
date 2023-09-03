@@ -2,8 +2,8 @@
 
 namespace App\Service\Provider\Paypal;
 
-use App\Entity\Token;
 use App\Interface\IProviderUrl;
+use App\Entity\TokenItem;
 use PayPal\Api\Amount;
 use PayPal\Api\Details;
 use PayPal\Api\Item as PaypalItem;
@@ -27,7 +27,7 @@ class ProviderUrl implements IProviderUrl
     ) {
     }
 
-    public function get(Token ...$tokens): string
+    public function get(TokenItem ...$tokenItems): string
     {
         $itemList = new ItemList();
 
@@ -36,9 +36,9 @@ class ProviderUrl implements IProviderUrl
         $taxTotal = 0.00;
         $externalItemIds = [];
 
-        foreach ($tokens as $token) {
+        foreach ($tokenItems as $tokenItem) {
 
-            $item = $token->getItem();
+            $item = $tokenItem->getItem();
 
             $paypalItem = new PaypalItem();
             $paypalItem->setName($item->getName())
@@ -47,15 +47,17 @@ class ProviderUrl implements IProviderUrl
                 ->setPrice($item->getPrice());
             $itemList->addItem($paypalItem);
 
-            $subTotal += $item->getQuantity() * $item->getPrice();
+            $itemPrice = $item->getQuantity() * $item->getPrice();
+            $subTotal += $itemPrice;
+
             $shippingTotal += $item->getShipping();
-            $taxTotal += $item->getVat();
+            $itemPrice += $item->getShipping();
 
             $externalItemIds[$item->getExternalId()] = true;
 
             if ($item->getDiscount() > 0) {
                 $paypalItem = new PaypalItem();
-                $price = $item->getPrice() * ($item->getDiscount() / 100);
+                $price = $itemPrice * ($item->getDiscount() / 100);
 
                 $paypalItem->setName("Discount")
                     ->setCurrency($item->getCurrencyCode())
@@ -64,7 +66,10 @@ class ProviderUrl implements IProviderUrl
                 $itemList->addItem($paypalItem);
 
                 $subTotal -= $price;
+                $itemPrice -= $price;
             }
+
+            $taxTotal += $itemPrice * ($item->getVat() / 100);
         }
 
         $details = new Details();
@@ -73,11 +78,12 @@ class ProviderUrl implements IProviderUrl
             ->setSubtotal($subTotal);
 
         $amount = new Amount();
-        $amount->setCurrency($tokens[0]->getItem()->getCurrencyCode())
+        $amount->setCurrency($tokenItems[0]->getItem()->getCurrencyCode())
             ->setTotal($subTotal + $shippingTotal + $taxTotal)
             ->setDetails($details);
 
-        $notifyURL = $this->params->get('app.domain') . $this->router->generate("notify", ['token' => $tokens[0]->getToken()]);
+        $tokenId = $tokenItems[0]->getToken()->getId();
+        $notifyURL = $this->params->get('app.domain') . $this->router->generate("notify", ['token' => $tokenId]);
 
         $paymentIdentification = \implode(", ", \array_keys($externalItemIds));
 
@@ -86,9 +92,9 @@ class ProviderUrl implements IProviderUrl
             ->setItemList($itemList)
             ->setCustom($paymentIdentification)
             ->setNotifyUrl($notifyURL)
-            ->setInvoiceNumber(uniqid());
+            ->setInvoiceNumber($tokenId);
 
-        $accountType = $this->params->get("app.paypal_sandbox") ? "sandbox" : $tokens[0]->getAccountKey();
+        $accountType = $this->params->get("app.paypal_sandbox") ? "sandbox" : $tokenItems[0]->getToken()->getAccountKey();
 
         $clientID = $this->params->get("app.paypal_account_$accountType");
         $clientSecret = $this->params->get(\sprintf("app.paypal_account_%s_secret", $accountType));
@@ -103,8 +109,8 @@ class ProviderUrl implements IProviderUrl
         $webProfile->setName(uniqid())->setInputFields($inputFields);
         $webProfileId = $webProfile->create($apiContext)->getId();
 
-        $returnURL = $this->params->get('app.domain') . $this->router->generate("capture", ['token' => $tokens[0]->getToken()]);
-        $cancelURL = $this->params->get('app.domain') . $this->router->generate("redirect", ['token' => $tokens[0]->getToken()]);
+        $returnURL = $this->params->get('app.domain') . $this->router->generate("capture", ['token' => $tokenId]);
+        $cancelURL = $this->params->get('app.domain') . $this->router->generate("redirect", ['token' => $tokenId]);
 
         $redirectUrls = new RedirectUrls();
         $redirectUrls->setReturnUrl($returnURL)

@@ -37,11 +37,9 @@ class Capture implements ICaptureable
 
         $payment->execute($execution, $apiContext);
 
-        $tokenEntities = $this->entityManager->getRepository(Token::class)->findBy(['token' => $token->getToken()]);
-        foreach ($tokenEntities as $tokenEntity)
-            $tokenEntity->setStatus(TokenStatus::UNAVAILABLE);
-        
+        $token->setStatus(TokenStatus::UNAVAILABLE);
         $this->entityManager->flush();
+        
         return true;
     }
 }

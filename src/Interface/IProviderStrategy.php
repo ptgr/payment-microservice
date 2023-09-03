@@ -3,9 +3,9 @@
 namespace App\Interface;
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use App\Entity\Token;
+use App\Entity\TokenItem;
 
 interface IProviderStrategy
 {
-    public function process(Token ...$tokens): RedirectResponse;
+    public function process(TokenItem ...$tokenItems): RedirectResponse;
 }

@@ -7,20 +7,11 @@ use App\Repository\TokenRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TokenRepository::class)]
-#[ORM\UniqueConstraint(columns:['token', 'item_id'])]
 class Token
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
-    #[ORM\ManyToOne(inversedBy: 'token', targetEntity: Item::class)]
-    #[ORM\JoinColumn(nullable: false)]
-    private Item $item;
-
     #[ORM\Column(length: 50)]
-    private ?string $token = null;
+    private string $id;
 
     private string $account_key = 'default';
 
@@ -40,31 +31,14 @@ class Token
         $this->created_at = new \DateTimeImmutable();
     }
 
-    public function getId(): ?int
+    public function getId(): string
     {
         return $this->id;
     }
 
-    public function getItem(): Item
+    public function setId(string $id): static
     {
-        return $this->item;
-    }
-
-    public function setItem(Item $item): static
-    {
-        $this->item = $item;
-
-        return $this;
-    }
-
-    public function getToken(): ?string
-    {
-        return $this->token;
-    }
-
-    public function setToken(string $token): static
-    {
-        $this->token = $token;
+        $this->id = $id;
 
         return $this;
     }

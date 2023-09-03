@@ -1,4 +1,11 @@
-localhost {
+:80 {
+    root * /srv/app/public
+    encode zstd gzip
+    php_fastcgi unix//var/run/php/php-fpm.sock
+    tls internal
+}
+
+:443 {
     root * /srv/app/public
     encode zstd gzip
     php_fastcgi unix//var/run/php/php-fpm.sock

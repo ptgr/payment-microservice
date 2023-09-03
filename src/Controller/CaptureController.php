@@ -22,26 +22,26 @@ class CaptureController extends AbstractController
     }
 
     #[Route('/api/v1/payment/capture/{token}', name: 'capture')]
-    public function index(Request $request, string $token, ProviderStrategy $providerStrategy): RedirectResponse
+    public function index(Request $request, ProviderStrategy $providerStrategy, ?Token $token = null): RedirectResponse
     {
         $processResult = null;
         try {
-            $tokenEntities = $this->entityManager->getRepository(Token::class)->findBy(['token' => $token]);
-            if (empty($tokenEntities)) {
-                $this->logger->warning("CAPTURE - The token does not exists.", ['token' => $token]);
+            if ($token === null) {
+                $this->logger->warning("CAPTURE - The token does not exists.");
                 return $this->redirect($this->getParameter('app.redirect_after_failure_payment'));
             }
 
-            if ($tokenEntities[0]->getStatus() !== TokenStatus::ACTIVE) {
-                $this->logger->warning("CAPTURE - The token is not active.", ['token' => $token]);
+            if ($token->getStatus() !== TokenStatus::ACTIVE) {
+                $this->logger->warning("CAPTURE - The token is not active.", ['token' => $token->getId()]);
                 return $this->redirect($this->getParameter('app.redirect_after_failure_payment'));
             }
 
-            $providerFacade = $providerStrategy->resolve($tokenEntities[0]->getMethod());
+            $providerFacade = $providerStrategy->resolve($token->getMethod());
             if (!$providerFacade instanceof ICaptureable)
                 return $this->redirect($this->getParameter('app.redirect_after_failure_payment'));
 
-            $processResult = $providerFacade->capture($tokenEntities[0], $request->toArray());
+            $payload = \array_merge($request->request->all(), $request->query->all());
+            $processResult = $providerFacade->capture($token, $payload);
 
         } catch (\Throwable $th) {
             $this->logger->error($request->attributes->get('_route'), ['error' => $th->getMessage(), 'stack' => $th->getTraceAsString()]);

@@ -5,7 +5,9 @@ namespace App\Controller;
 use App\Entity\Item;
 use App\Entity\Method;
 use App\Entity\Token;
+use App\Entity\TokenItem;
 use App\Request\TokenRequest;
+use App\Service\Credential;
 use App\Service\ProviderStrategy;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -27,7 +29,7 @@ class TokenController extends AbstractController
     public function get(Request $request, ProviderStrategy $providerStrategy): JsonResponse
     {
         $payload = $request->toArray();
-        $token = "";
+        $tokenEntity = null;
 
         try {
             $this->entityManager->getConnection()->beginTransaction();
@@ -46,17 +48,20 @@ class TokenController extends AbstractController
             $items = $this->entityManager->getRepository(Item::class)->storeTokenPayload($payload);
             if (empty($items))
                 return new JsonResponse("No item can be included in payment.", Response::HTTP_UNPROCESSABLE_ENTITY);
+            
+            $credential = (new Credential())->get($methodEntity->getId(), $items[0]->getCurrencyCode());
+            $tokenEntity = $this->entityManager->getRepository(Token::class)->generate($methodEntity, $credential);
 
-            $token = $this->entityManager->getRepository(Token::class)->generate($methodEntity, ...$items);
+            $this->entityManager->getRepository(TokenItem::class)->store($tokenEntity, ...$items);
 
             $this->entityManager->getConnection()->commit();
         } catch (\Throwable $th) {
             $this->entityManager->getConnection()->rollBack();
-            $this->logger->error($request->attributes->get('_route'), ['error' => $th->getMessage(), 'stack' => $th->getTraceAsString(), 'payload' => $payload]);
+            $this->logger->error($request->getUri(), ['error' => $th->getMessage(), 'stack' => $th->getTraceAsString(), 'payload' => $payload]);
             return new JsonResponse($th->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        $payUrl = $this->getParameter('app.domain') . $this->generateUrl("pay", ['token' => $token]);
-        return new JsonResponse(['token' => $token, 'pay_url' => $payUrl], Response::HTTP_CREATED);
+        $payUrl = $this->getParameter('app.domain') . $this->generateUrl("pay", ['token' => $tokenEntity->getId()]);
+        return new JsonResponse(['token' => $tokenEntity->getId(), 'pay_url' => $payUrl], Response::HTTP_CREATED);
     }
 }
