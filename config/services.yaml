@@ -38,3 +38,6 @@ services:
     adyen_facade:
         public: true
         class: App\Service\Provider\AdyenFacade
+        arguments:
+            $providerUrlInstance: '@App\Service\Provider\Adyen\ProviderUrl'
+            $notifyInstance: '@App\Service\Provider\Adyen\Notify'

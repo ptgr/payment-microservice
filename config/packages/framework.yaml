@@ -31,3 +31,6 @@ parameters:
     app.paypal_sandbox: '%env(bool:PAYPAL_SANDBOX)%'
     app.paypal_account_sandbox: '%env(string:PAYPAL_ACCOUNT_SANDBOX)%'
     app.paypal_account_sandbox_secret: '%env(string:PAYPAL_ACCOUNT_SANDBOX_SECRET)%'
+    app.adyen_sandbox: '%env(bool:ADYEN_SANDBOX)%'
+    app.adyen_account_sandbox: '%env(string:ADYEN_ACCOUNT_SANDBOX)%'
+    app.adyen_account_sandbox_secret: '%env(string:ADYEN_ACCOUNT_SANDBOX_SECRET)%'
