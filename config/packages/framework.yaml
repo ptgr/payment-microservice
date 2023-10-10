@@ -28,9 +28,13 @@ parameters:
     app.domain: '%env(string:DOMAIN)%'
     app.redirect_after_success_payment: '%env(string:REDIRECT_AFTER_SUCCESS_PAYMENT)%'
     app.redirect_after_failure_payment: '%env(string:REDIRECT_AFTER_FAILURE_PAYMENT)%'
+    
     app.paypal_sandbox: '%env(bool:PAYPAL_SANDBOX)%'
+    app.paypal_sandbox_api_url: '%env(string:PAYPAL_API_SANDBOX_URL)%'
     app.paypal_account_sandbox: '%env(string:PAYPAL_ACCOUNT_SANDBOX)%'
     app.paypal_account_sandbox_secret: '%env(string:PAYPAL_ACCOUNT_SANDBOX_SECRET)%'
+    app.paypal_api_url: '%env(string:PAYPAL_API_URL)%'
+    
     app.adyen_sandbox: '%env(bool:ADYEN_SANDBOX)%'
     app.adyen_account_sandbox: '%env(string:ADYEN_ACCOUNT_SANDBOX)%'
     app.adyen_account_sandbox_secret: '%env(string:ADYEN_ACCOUNT_SANDBOX_SECRET)%'

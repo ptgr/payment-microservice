@@ -15,6 +15,7 @@ class TokenRequest extends AbstractRequest
     protected function getConstrains(): Collection
     {
         return new Assert\Collection([
+            'transaction_name' => [new Assert\Length(min: 1, max: 60), new Assert\NotBlank],
             'vat' => [new Assert\Type('integer'), new Assert\PositiveOrZero, new Assert\NotBlank],
             'currency_code' => [new Assert\Length(3), new Assert\NotBlank],
             'method_id' => [new Assert\Type('integer'), new Assert\NotBlank],

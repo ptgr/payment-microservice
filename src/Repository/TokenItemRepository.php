@@ -15,12 +15,13 @@ class TokenItemRepository extends ServiceEntityRepository
         parent::__construct($registry, TokenItem::class);
     }
 
-    public function store(Token $token, Item ...$items): void
+    public function store(Token $token, string $transactionName, Item ...$items): void
     {
         foreach ($items as $item) {
             $tokenItemEntity = new TokenItem();
             $tokenItemEntity->setToken($token);
             $tokenItemEntity->setItem($item);
+            $tokenItemEntity->setTransactionName($transactionName);
 
             $this->getEntityManager()->persist($tokenItemEntity);
         }

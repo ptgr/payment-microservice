@@ -21,6 +21,9 @@ class TokenItem
     #[ORM\JoinColumn(nullable: false)]
     private Item $item;
 
+    #[ORM\Column(length: 60)]
+    private ?string $transactionName = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -46,6 +49,18 @@ class TokenItem
     public function setItem(Item $item): static
     {
         $this->item = $item;
+
+        return $this;
+    }
+
+    public function getTransactionName(): ?string
+    {
+        return $this->transactionName;
+    }
+
+    public function setTransactionName(string $transactionName): static
+    {
+        $this->transactionName = $transactionName;
 
         return $this;
     }

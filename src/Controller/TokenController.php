@@ -52,7 +52,7 @@ class TokenController extends AbstractController
             $credential = (new Credential())->get($methodEntity->getId(), $items[0]->getCurrencyCode());
             $tokenEntity = $this->entityManager->getRepository(Token::class)->generate($methodEntity, $credential);
 
-            $this->entityManager->getRepository(TokenItem::class)->store($tokenEntity, ...$items);
+            $this->entityManager->getRepository(TokenItem::class)->store($tokenEntity, $payload['transaction_name'], ...$items);
 
             $this->entityManager->getConnection()->commit();
         } catch (\Throwable $th) {

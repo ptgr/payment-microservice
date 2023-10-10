@@ -37,7 +37,7 @@ class Payment
     {
         $this->status = PaymentStatus::AUTHORIZED;
         $this->created_at = new \DateTimeImmutable();
-        $this->updated_at = new \DateTimeImmutable();
+        $this->setUpdatedAt();
     }
 
     public function getId(): ?int
@@ -101,5 +101,11 @@ class Payment
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updated_at;
+    }
+
+    public function setUpdatedAt(): static
+    {
+        $this->updated_at = new \DateTimeImmutable();
+        return $this;
     }
 }

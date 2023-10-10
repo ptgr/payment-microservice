@@ -2,129 +2,129 @@
 
 namespace App\Service\Provider\Paypal;
 
+use App\Entity\Item;
 use App\Interface\IProviderUrl;
 use App\Entity\TokenItem;
-use PayPal\Api\Amount;
-use PayPal\Api\Details;
-use PayPal\Api\Item as PaypalItem;
-use PayPal\Api\ItemList;
-use PayPal\Api\Payer;
-use PayPal\Api\Payment as PaypalPayment;
-use PayPal\Api\RedirectUrls;
-use PayPal\Api\Transaction;
-use PayPal\Api\InputFields;
-use PayPal\Api\WebProfile;
-use PayPal\Auth\OAuthTokenCredential;
-use PayPal\Rest\ApiContext;
+use App\Service\Provider\Paypal\Auth;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class ProviderUrl implements IProviderUrl
 {
+    private float $subTotal = 0.00;
+    private float $shippingTotal = 0.00;
+    private float $taxTotal = 0.00;
+    private float $discountPrice = 0.00;
+
+    private array $itemList;
+    private array $payload;
+
     public function __construct(
         private UrlGeneratorInterface $router,
         private ParameterBagInterface $params
     ) {
     }
 
+    public function getPayload(): array
+    {
+        return $this->payload;
+    }
+
     public function get(TokenItem ...$tokenItems): string
     {
-        $itemList = new ItemList();
-
-        $subTotal = 0.00;
-        $shippingTotal = 0.00;
-        $taxTotal = 0.00;
-        $externalItemIds = [];
-
         foreach ($tokenItems as $tokenItem) {
 
             $item = $tokenItem->getItem();
-
-            $paypalItem = new PaypalItem();
-            $paypalItem->setName($item->getName())
-                ->setCurrency($item->getCurrencyCode())
-                ->setQuantity($item->getQuantity())
-                ->setPrice($item->getPrice());
-            $itemList->addItem($paypalItem);
-
-            $itemPrice = $item->getQuantity() * $item->getPrice();
-            $subTotal += $itemPrice;
-
-            $shippingTotal += $item->getShipping();
-            $itemPrice += $item->getShipping();
-
-            $externalItemIds[$item->getExternalId()] = true;
-
-            if ($item->getDiscount() > 0) {
-                $paypalItem = new PaypalItem();
-                $price = $itemPrice * ($item->getDiscount() / 100);
-
-                $paypalItem->setName("Discount")
-                    ->setCurrency($item->getCurrencyCode())
-                    ->setQuantity(1)
-                    ->setPrice(-$price);
-                $itemList->addItem($paypalItem);
-
-                $subTotal -= $price;
-                $itemPrice -= $price;
-            }
-
-            $taxTotal += $itemPrice * ($item->getVat() / 100);
+            $this->itemList[] = $this->addItemToList($item);
+            $this->updateTotals($item);
         }
 
-        $details = new Details();
-        $details->setShipping($shippingTotal)
-            ->setTax($taxTotal)
-            ->setSubtotal($subTotal);
+        $this->setPayload($tokenItems[0]);
 
-        $amount = new Amount();
-        $amount->setCurrency($tokenItems[0]->getItem()->getCurrencyCode())
-            ->setTotal($subTotal + $shippingTotal + $taxTotal)
-            ->setDetails($details);
+        $authInstance = new Auth($tokenItems[0]->getToken()->getAccountKey(), $this->params);
+        $response = (new Api($authInstance))->createOrder($this->payload);
 
-        $tokenId = $tokenItems[0]->getToken()->getId();
-        $notifyURL = $this->params->get('app.domain') . $this->router->generate("notify", ['token' => $tokenId]);
+        foreach ($response['links'] as $link) {
+            if ($link['rel'] === 'payer-action')
+                return $link['href'];
+        }
 
-        $paymentIdentification = \implode(", ", \array_keys($externalItemIds));
+        throw new \UnexpectedValueException(\sprintf('Paypal provider url did not return a payer action link - %s', $response));
+    }
 
-        $transaction = new Transaction();
-        $transaction->setAmount($amount)
-            ->setItemList($itemList)
-            ->setCustom($paymentIdentification)
-            ->setNotifyUrl($notifyURL)
-            ->setInvoiceNumber($tokenId);
+    private function addItemToList(Item $item): array
+    {
+        return [
+            'name' => $item->getName() ?: '---',
+            'quantity' => $item->getQuantity(),
+            'unit_amount' => [
+                "currency_code" => $item->getCurrencyCode(),
+                "value" => $item->getPrice(),
+            ]
+        ];
+    }
 
-        $accountType = $this->params->get("app.paypal_sandbox") ? "sandbox" : $tokenItems[0]->getToken()->getAccountKey();
+    private function updateTotals(Item $item): void
+    {
+        $itemPrice = $item->getQuantity() * $item->getPrice();
+        $this->subTotal += $itemPrice;
+        $this->shippingTotal += $item->getShipping();
+        $itemPriceWithShipping = $itemPrice + $item->getShipping();
+        $this->taxTotal += $itemPriceWithShipping * ($item->getVat() / 100);
 
-        $clientID = $this->params->get("app.paypal_account_$accountType");
-        $clientSecret = $this->params->get(\sprintf("app.paypal_account_%s_secret", $accountType));
+        if ($item->getDiscount() > 0)
+            $this->discountPrice += $itemPriceWithShipping * ($item->getDiscount() / 100);
+    }
 
-        $apiContext = new ApiContext(new OAuthTokenCredential($clientID, $clientSecret));
-        $apiContext->setConfig(['mode' => $accountType === 'sandbox' ? 'sandbox' : 'live']);
+    private function setPayload(TokenItem $tokenItem): void
+    {
+        $tokenId = $tokenItem->getToken()->getId();
+        $currencyCode = $tokenItem->getItem()->getCurrencyCode();
 
-        $inputFields = new InputFields();
-        $inputFields->setNoShipping(1);
+        $this->payload = [
+            "intent" => "CAPTURE",
+            "purchase_units" => [
+                [
+                    "custom_id" => \base64_encode($tokenId . $tokenItem->getTransactionName()),
+                    "invoice_id" => $tokenItem->getTransactionName(),
+                    'items' => $this->itemList,
+                    "amount" => [
+                        "currency_code" => $currencyCode,
+                        "value" => (string) ($this->subTotal + $this->shippingTotal + $this->taxTotal - $this->discountPrice),
+                        'breakdown' => [
+                            'item_total' => [
+                                "currency_code" => $currencyCode,
+                                "value" => (string) $this->subTotal,
+                            ],
+                            'shipping' => [
+                                "currency_code" => $currencyCode,
+                                "value" => (string) $this->shippingTotal,
+                            ],
+                            'tax_total' => [
+                                "currency_code" => $currencyCode,
+                                "value" => (string) $this->taxTotal,
+                            ],
+                        ]
+                    ]
+                ]
+            ],
+            "payment_source" => [
+                "paypal" => [
+                    "experience_context" => [
+                        "landing_page" => "LOGIN",
+                        "user_action" => "PAY_NOW",
+                        "return_url" => $this->params->get('app.domain') . $this->router->generate("capture", ['token' => $tokenId]),
+                        "cancel_url" => $this->params->get('app.domain') . $this->router->generate("redirect", ['token' => $tokenId])
+                    ]
+                ]
+            ]
+        ];
 
-        $webProfile = new WebProfile();
-        $webProfile->setName(uniqid())->setInputFields($inputFields);
-        $webProfileId = $webProfile->create($apiContext)->getId();
-
-        $returnURL = $this->params->get('app.domain') . $this->router->generate("capture", ['token' => $tokenId]);
-        $cancelURL = $this->params->get('app.domain') . $this->router->generate("redirect", ['token' => $tokenId]);
-
-        $redirectUrls = new RedirectUrls();
-        $redirectUrls->setReturnUrl($returnURL)
-            ->setCancelUrl($cancelURL);
-
-        $paypalPayment = new PaypalPayment();
-        $paypalPayment->setIntent("sale")
-            ->setPayer((new Payer())->setPaymentMethod("paypal"))
-            ->setRedirectUrls($redirectUrls)
-            ->setTransactions([$transaction]);
-
-        $paypalPayment->setExperienceProfileId($webProfileId);
-
-        $paypalPayment->create($apiContext);
-        return $paypalPayment->getApprovalLink();
+        if ($this->discountPrice > 0) {
+            $this->payload['purchase_units'][0]['amount']['breakdown']['discount'] = [
+                "currency_code" => $currencyCode,
+                "value" => (string) $this->discountPrice,
+            ];
+        }
     }
 }

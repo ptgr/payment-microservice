@@ -39,7 +39,7 @@ class AdyenFacade implements IProviderStrategy, INotifiable, IProviderNotificati
     {
         $data = $request->toArray();
         if (!isset($data['notificationItems']))
-            return null;
+            return false;
             
         $notifyItem = reset($data["notificationItems"]);
         $notifyItem = $notifyItem['NotificationRequestItem'];
