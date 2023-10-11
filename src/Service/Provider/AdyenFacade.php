@@ -30,7 +30,7 @@ class AdyenFacade implements IProviderStrategy, INotifiable, IProviderNotificati
         return new RedirectResponse($providerUrl);
     }
 
-    public function notify(Request $request): JsonResponse
+    public function notify(Request $request, ?Token $token): JsonResponse
     {
         return $this->notifyInstance->notify($request);
     }

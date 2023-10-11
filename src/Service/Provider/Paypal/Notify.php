@@ -15,8 +15,10 @@ use App\Entity\Token;
 
 class Notify implements INotifiable, INotifyToken
 {
-
     private readonly Token $token;
+
+    private const REFUND_EVENT_TYPES = ['PAYMENT.CAPTURE.DENIED'];
+    private const COMPLETE_EVENT_TYPES = ['PAYMENT.CAPTURE.COMPLETED'];
 
     public function __construct(
         private EntityManagerInterface $entityManager,
@@ -24,32 +26,24 @@ class Notify implements INotifiable, INotifyToken
     ) {
     }
 
-    public function notify(Request $request): JsonResponse
+    public function setNotifyToken(Token $token): void
     {
+        $this->token = $token;
+    }
+
+    public function notify(Request $request, ?Token $token): JsonResponse
+    {
+        if ($token !== null)
+            $this->token = $token;
+
         $notifyItem = $request->toArray();
-        if (strtoupper($notifyItem['event_type'] === 'PAYMENT.CAPTURE.DENIED')) {
+        $eventType = \strtoupper($notifyItem['event_type']);
 
-            $paymentEntity = $this->entityManager->getRepository(Payment::class)->findOneBy(['transaction_number' => $notifyItem['resource']['id']]);
-            $paymentEntity->setUpdatedAt();
-            $paymentEntity->setStatus(PaymentStatus::REFUNDED);
-            $this->entityManager->flush();
-        }
+        if (\in_array($eventType, self::REFUND_EVENT_TYPES) && !empty($notifyItem['resource']['id']))
+            $this->refundNotify($notifyItem['resource']['id']);
 
-        if (strtoupper($notifyItem['event_type'] === 'PAYMENT.CAPTURE.COMPLETED')) {
-
-            $paymentEntityCount = $this->entityManager->getRepository(Payment::class)->count(['token' => $this->token->getId()]);
-
-            if ($paymentEntityCount === 0) {
-                $paymentEntity = new Payment(); 
-                $paymentEntity->setToken($this->token);
-                $paymentEntity->setAmount($notifyItem['resource']['amount']['value']);
-                $paymentEntity->setTransactionNumber($notifyItem['resource']['id']);
-                $paymentEntity->setStatus(PaymentStatus::CAPTURED);
-
-                $this->entityManager->persist($paymentEntity);
-                $this->entityManager->flush();
-            }
-        }
+        if (\in_array($eventType, self::COMPLETE_EVENT_TYPES) && !empty($notifyItem['resource']['id']) && !empty($notifyItem['resource']['amount']['value']))
+            $this->completeNotify($notifyItem['resource']['amount']['value'], $notifyItem['resource']['id']);
 
         $this->token->setStatus(TokenStatus::EXPIRED);
         $this->entityManager->persist($this->token);
@@ -58,8 +52,27 @@ class Notify implements INotifiable, INotifyToken
         return new JsonResponse();
     }
 
-    public function setNotifyToken(Token $token): void
+    private function refundNotify(string $transactionNumber): void
     {
-        $this->token = $token;
+        $paymentEntity = $this->entityManager->getRepository(Payment::class)->findOneBy(['transaction_number' => $transactionNumber]);
+        $paymentEntity->setUpdatedAt();
+        $paymentEntity->setStatus(PaymentStatus::REFUNDED);
+        $this->entityManager->flush();
+    }
+
+    private function completeNotify(float $amount, string $transactionNumber): void
+    {
+        $paymentEntityCount = $this->entityManager->getRepository(Payment::class)->count(['token' => $this->token->getId()]);
+        if ($paymentEntityCount !== 0)
+            return;
+
+        $paymentEntity = new Payment();
+        $paymentEntity->setToken($this->token);
+        $paymentEntity->setAmount($amount);
+        $paymentEntity->setTransactionNumber($transactionNumber);
+        $paymentEntity->setStatus(PaymentStatus::CAPTURED);
+
+        $this->entityManager->persist($paymentEntity);
+        $this->entityManager->flush();
     }
 }

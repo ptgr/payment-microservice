@@ -22,7 +22,7 @@ class Notify implements INotifiable
 
     private readonly Token $token;
 
-    public function notify(Request $request): JsonResponse
+    public function notify(Request $request, ?Token $token): JsonResponse
     {
         $data = $request->toArray();
 

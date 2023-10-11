@@ -13,7 +13,8 @@ class Token
     #[ORM\Column(length: 50)]
     private string $id;
 
-    private string $account_key = 'default';
+    #[ORM\Column(length: 20)]
+    private string $account_key;
 
     #[ORM\ManyToOne(inversedBy: 'method')]
     #[ORM\JoinColumn(nullable: false)]
@@ -27,6 +28,7 @@ class Token
 
     public function __construct()
     {
+        $this->account_key = "default";
         $this->status = TokenStatus::ACTIVE;
         $this->created_at = new \DateTimeImmutable();
     }

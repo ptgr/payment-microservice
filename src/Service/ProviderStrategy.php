@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Interface\INotifiable;
+use App\Interface\IProviderNotification;
 use App\Interface\IProviderStrategy;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use App\Entity\Method;
@@ -30,11 +32,17 @@ class ProviderStrategy
         return \in_array($method->getInternalKey(), ['paypal', 'adyen']);
     }
 
-    public function getAll(): array
+    public function getNotificationProviders(): \Generator
     {
-        return [
-            $this->container->get('paypal_facade'),
-            $this->container->get('adyen_facade')
-        ];
+        $providers = ['paypal_facade', 'adyen_facade'];
+
+        foreach ($providers as $provider) {
+            $providerInstance = $this->container->get($provider);
+
+            if (!$providerInstance instanceof IProviderNotification || !$providerInstance instanceof INotifiable)
+                continue;
+
+            return yield $providerInstance;
+        }
     }
 }

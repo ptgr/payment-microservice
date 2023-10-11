@@ -20,13 +20,13 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    # PROVIDER STRATEGY
     App\Service\ProviderStrategy:
         arguments:
             $entityManager: '@doctrine.orm.entity_manager'
             $container: '@service_container'
 
+    # PAYPAL
     paypal_facade:
         public: true
         class: App\Service\Provider\PaypalFacade
@@ -35,6 +35,15 @@ services:
             $captureInstance: '@App\Service\Provider\Paypal\Capture'
             $notifyInstance: '@App\Service\Provider\Paypal\Notify'
 
+    App\Service\Provider\Paypal\ProviderUrl:
+        arguments:
+            $api: '@App\Service\Provider\Paypal\Api'
+    
+    App\Service\Provider\Paypal\Capture:
+        arguments:
+            $api: '@App\Service\Provider\Paypal\Api'
+
+    # ADYEN
     adyen_facade:
         public: true
         class: App\Service\Provider\AdyenFacade

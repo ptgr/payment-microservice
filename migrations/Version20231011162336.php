@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20231010164943 extends AbstractMigration
+final class Version20231011162336 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -32,7 +32,7 @@ final class Version20231010164943 extends AbstractMigration
         $this->addSql('CREATE INDEX IDX_6D28840D41DEE7B9 ON payment (token_id)');
         $this->addSql('COMMENT ON COLUMN payment.created_at IS \'(DC2Type:datetime_immutable)\'');
         $this->addSql('COMMENT ON COLUMN payment.updated_at IS \'(DC2Type:datetime_immutable)\'');
-        $this->addSql('CREATE TABLE token (id VARCHAR(50) NOT NULL, method_id INT NOT NULL, status VARCHAR(255) NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(id))');
+        $this->addSql('CREATE TABLE token (id VARCHAR(50) NOT NULL, method_id INT NOT NULL, account_key VARCHAR(20) NOT NULL, status VARCHAR(255) NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(id))');
         $this->addSql('CREATE INDEX IDX_5F37A13B19883967 ON token (method_id)');
         $this->addSql('COMMENT ON COLUMN token.created_at IS \'(DC2Type:datetime_immutable)\'');
         $this->addSql('CREATE TABLE token_item (id INT NOT NULL, token_id VARCHAR(50) NOT NULL, item_id INT NOT NULL, transaction_name VARCHAR(60) NOT NULL, PRIMARY KEY(id))');

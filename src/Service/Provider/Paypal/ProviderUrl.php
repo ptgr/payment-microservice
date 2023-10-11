@@ -3,9 +3,9 @@
 namespace App\Service\Provider\Paypal;
 
 use App\Entity\Item;
+use App\Interface\IPaypalAPI;
 use App\Interface\IProviderUrl;
 use App\Entity\TokenItem;
-use App\Service\Provider\Paypal\Auth;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -21,7 +21,8 @@ class ProviderUrl implements IProviderUrl
 
     public function __construct(
         private UrlGeneratorInterface $router,
-        private ParameterBagInterface $params
+        private ParameterBagInterface $params,
+        private IPaypalAPI $api
     ) {
     }
 
@@ -40,9 +41,9 @@ class ProviderUrl implements IProviderUrl
         }
 
         $this->setPayload($tokenItems[0]);
+        $this->api->setAccount($tokenItems[0]->getToken()->getAccountKey());
 
-        $authInstance = new Auth($tokenItems[0]->getToken()->getAccountKey(), $this->params);
-        $response = (new Api($authInstance))->createOrder($this->payload);
+        $response = $this->api->createOrder($this->payload);
 
         foreach ($response['links'] as $link) {
             if ($link['rel'] === 'payer-action')

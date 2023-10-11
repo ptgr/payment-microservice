@@ -42,9 +42,9 @@ class PaypalFacade implements IProviderStrategy, ICaptureable, INotifiable, IPro
         return new RedirectResponse($this->params->get('app.redirect_after_failure_payment'));
     }
 
-    public function notify(Request $request): JsonResponse
+    public function notify(Request $request, ?Token $token): JsonResponse
     {
-        return $this->notifyInstance->notify($request);
+        return $this->notifyInstance->notify($request, $token);
     }
 
     public function isProviderNotification(Request $request, ?string $token): bool

@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Interface\IProviderNotification;
+use App\Entity\Token;
 use App\Interface\INotifiable;
 use App\Service\ProviderStrategy;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,34 +22,31 @@ class NotifyController extends AbstractController
     }
 
     #[Route('/api/v1/payment/notify/{token}', name: 'notify')]
-    public function index(Request $request, ProviderStrategy $providerStrategy, ?string $token = null): JsonResponse
+    public function index(Request $request, ProviderStrategy $providerStrategy, ?Token $token = null): JsonResponse
     {
-        $processResult = null;
         try {
-            $providers = $providerStrategy->getAll();
-            foreach ($providers as $provider) {
-                if (!$provider instanceof IProviderNotification)
-                    continue;
+            $providerInstance = null;
 
-                $isProviderNotification = $provider->isProviderNotification($request, $token);
-                if (!$isProviderNotification)
-                    continue;
-                
-                if (!$provider instanceof INotifiable)
-                    continue;
+            if ($token === null) {
+                foreach ($providerStrategy->getNotificationProviders() as $provider) {
 
-                $processResult = $provider->notify($request);
-                break;
+                    if ($provider->isProviderNotification($request, $token)) {
+                        $providerInstance = $provider;
+                        break;
+                    }
+                }
+            } else {
+                $providerInstance = $providerStrategy->resolve($token->getMethod());
             }
+
+            if (!$providerInstance instanceof INotifiable)
+                return new JsonResponse("The notification was not process with success.", Response::HTTP_UNPROCESSABLE_ENTITY);
+
+            return $providerInstance->notify($request, $token);
 
         } catch (\Throwable $th) {
             $this->logger->error($request->attributes->get('_route'), ['error' => $th->getMessage(), 'stack' => $th->getTraceAsString(), 'content' => $request->getContent()]);
             return new JsonResponse($th->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        if ($processResult !== null)
-            return $processResult;
-
-        return new JsonResponse("The notification was not process with success.", Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 }
