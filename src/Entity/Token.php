@@ -2,8 +2,10 @@
 
 namespace App\Entity;
 
+use App\Enum\StatusType;
 use App\Enum\TokenStatus;
 use App\Repository\TokenRepository;
+use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TokenRepository::class)]
@@ -16,9 +18,9 @@ class Token
     #[ORM\Column(length: 20)]
     private string $account_key;
 
-    #[ORM\ManyToOne(inversedBy: 'method')]
+    #[ORM\ManyToOne(inversedBy: 'provider')]
     #[ORM\JoinColumn(nullable: false)]
-    private Method $method;
+    private Provider $provider;
 
     #[ORM\Column(enumType: TokenStatus::class)]
     private TokenStatus $status;
@@ -57,14 +59,14 @@ class Token
         return $this;
     }
 
-    public function getMethod(): Method
+    public function getProvider(): Provider
     {
-        return $this->method;
+        return $this->provider;
     }
 
-    public function setMethod(Method $method): static
+    public function setProvider(Provider $provider): static
     {
-        $this->method = $method;
+        $this->provider = $provider;
 
         return $this;
     }
@@ -74,6 +76,20 @@ class Token
         return $this->status;
     }
 
+    #[ORM\PreUpdate]
+    public function onStatusChanged(PreUpdateEventArgs $args): void
+    {
+        if (!$args->hasChangedField('status'))
+            return;
+
+        $statusHistory = new StatusHistory();
+        $statusHistory->setType(StatusType::TOKEN);
+        $statusHistory->setOld($args->getOldValue('status'));
+        $statusHistory->setNew($args->getNewValue('status'));
+
+        $args->getEntityManager()->persist($statusHistory);
+    }
+
     public function setStatus(TokenStatus $status): static
     {
         $this->status = $status;
@@ -81,7 +97,7 @@ class Token
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->created_at;
     }

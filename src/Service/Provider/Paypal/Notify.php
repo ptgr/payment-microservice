@@ -6,7 +6,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use App\Interface\INotifiable;
 use App\Enum\TokenStatus;
-use App\Enum\PaymentStatus;
 use App\Entity\Payment;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -38,41 +37,18 @@ class Notify implements INotifiable, INotifyToken
 
         $notifyItem = $request->toArray();
         $eventType = \strtoupper($notifyItem['event_type']);
+        $paymentRepository = $this->entityManager->getRepository(Payment::class);
 
         if (\in_array($eventType, self::REFUND_EVENT_TYPES) && !empty($notifyItem['resource']['id']))
-            $this->refundNotify($notifyItem['resource']['id']);
+            $paymentRepository->setAsRefund($notifyItem['resource']['id']);
 
         if (\in_array($eventType, self::COMPLETE_EVENT_TYPES) && !empty($notifyItem['resource']['id']) && !empty($notifyItem['resource']['amount']['value']))
-            $this->completeNotify($notifyItem['resource']['amount']['value'], $notifyItem['resource']['id']);
+            $paymentRepository->store($this->token, $notifyItem['resource']['amount']['value'], $notifyItem['resource']['id']);
 
         $this->token->setStatus(TokenStatus::EXPIRED);
         $this->entityManager->persist($this->token);
         $this->entityManager->flush();
 
         return new JsonResponse();
-    }
-
-    private function refundNotify(string $transactionNumber): void
-    {
-        $paymentEntity = $this->entityManager->getRepository(Payment::class)->findOneBy(['transaction_number' => $transactionNumber]);
-        $paymentEntity->setUpdatedAt();
-        $paymentEntity->setStatus(PaymentStatus::REFUNDED);
-        $this->entityManager->flush();
-    }
-
-    private function completeNotify(float $amount, string $transactionNumber): void
-    {
-        $paymentEntityCount = $this->entityManager->getRepository(Payment::class)->count(['token' => $this->token->getId()]);
-        if ($paymentEntityCount !== 0)
-            return;
-
-        $paymentEntity = new Payment();
-        $paymentEntity->setToken($this->token);
-        $paymentEntity->setAmount($amount);
-        $paymentEntity->setTransactionNumber($transactionNumber);
-        $paymentEntity->setStatus(PaymentStatus::CAPTURED);
-
-        $this->entityManager->persist($paymentEntity);
-        $this->entityManager->flush();
     }
 }

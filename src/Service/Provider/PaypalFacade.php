@@ -64,6 +64,6 @@ class PaypalFacade implements IProviderStrategy, ICaptureable, INotifiable, IPro
         if ($this->notifyInstance instanceof INotifyToken)
             $this->notifyInstance->setNotifyToken($tokenItem->getToken());
 
-        return $tokenItem->getToken()->getMethod()->getInternalKey() === 'paypal';
+        return $tokenItem->getToken()->getProvider()->getInternalKey() === 'paypal';
     }
 }

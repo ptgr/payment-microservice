@@ -36,7 +36,7 @@ class NotifyController extends AbstractController
                     }
                 }
             } else {
-                $providerInstance = $providerStrategy->resolve($token->getMethod());
+                $providerInstance = $providerStrategy->resolve($token->getProvider());
             }
 
             if (!$providerInstance instanceof INotifiable)

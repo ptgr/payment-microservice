@@ -20,6 +20,10 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+    App\NotFoundHandler:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception, method: onKernelException }
+
     # PROVIDER STRATEGY
     App\Service\ProviderStrategy:
         arguments:

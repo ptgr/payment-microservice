@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Item;
-use App\Entity\Method;
+use App\Entity\Provider;
 use App\Entity\Token;
 use App\Entity\TokenItem;
 use App\Request\TokenRequest;
@@ -39,18 +39,16 @@ class TokenController extends AbstractController
             if (!empty($errors))
                 return new JsonResponse($errors, Response::HTTP_BAD_REQUEST);
 
-            $methodEntity = $this->entityManager->getRepository(Method::class)->find($payload['method_id']);
-
-            $strategyExists = $providerStrategy->exists($methodEntity);
-            if (!$strategyExists)
+            $providerEntity = $this->entityManager->getRepository(Provider::class)->find($payload['provider_id']);
+            if (!$providerEntity)
                 return new JsonResponse("There is no provider strategy.", Response::HTTP_UNPROCESSABLE_ENTITY);
 
             $items = $this->entityManager->getRepository(Item::class)->storeTokenPayload($payload);
             if (empty($items))
                 return new JsonResponse("No item can be included in payment.", Response::HTTP_UNPROCESSABLE_ENTITY);
             
-            $credential = (new Credential())->get($methodEntity->getId(), $items[0]->getCurrencyCode());
-            $tokenEntity = $this->entityManager->getRepository(Token::class)->generate($methodEntity, $credential);
+            $credential = (new Credential())->get($providerEntity->getId(), $items[0]->getCurrencyCode());
+            $tokenEntity = $this->entityManager->getRepository(Token::class)->generate($providerEntity, $credential);
 
             $this->entityManager->getRepository(TokenItem::class)->store($tokenEntity, $payload['transaction_name'], ...$items);
 

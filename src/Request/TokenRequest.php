@@ -18,7 +18,7 @@ class TokenRequest extends AbstractRequest
             'transaction_name' => [new Assert\Length(min: 1, max: 60), new Assert\NotBlank],
             'vat' => [new Assert\Type('integer'), new Assert\PositiveOrZero, new Assert\NotBlank],
             'currency_code' => [new Assert\Length(3), new Assert\NotBlank],
-            'method_id' => [new Assert\Type('integer'), new Assert\NotBlank],
+            'provider_id' => [new Assert\Type('integer'), new Assert\NotBlank],
             'items' => new Assert\Optional([
                 new Assert\Type('array'),
                 new Assert\Count(min: 1),

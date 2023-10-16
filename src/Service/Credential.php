@@ -4,7 +4,7 @@ namespace App\Service;
 
 class Credential
 {
-    public function get(int $methodId, string $currencyCode): string
+    public function get(int $providerId, string $currencyCode): string
     {
         return "default";
     }

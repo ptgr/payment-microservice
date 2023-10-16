@@ -36,7 +36,7 @@ class PayController extends AbstractController
                 return $this->redirect($this->getParameter('app.redirect_after_failure_payment'));
             }
 
-            $providerFacade = $providerStrategy->resolve($token->getMethod());
+            $providerFacade = $providerStrategy->resolve($token->getProvider());
 
             $tokenItemsEntities = $this->entityManager->getRepository(TokenItem::class)->findBy(['token' => $token->getId()]);
             $processResult = $providerFacade->process(...$tokenItemsEntities);
