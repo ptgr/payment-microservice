@@ -1,15 +1,14 @@
 {
-    "name": "symfony/skeleton",
+    "name": "ptgr/payment-microservice",
     "type": "project",
     "license": "MIT",
-    "description": "A minimal Symfony project recommended to create bare bones applications",
+    "description": "Example of lightweight payment microservice",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
         "php": ">=8.2.9",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "adyen/php-api-library": "^13.0",
         "doctrine/doctrine-bundle": "^2.10",
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "doctrine/orm": "^2.16",

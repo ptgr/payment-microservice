@@ -7,26 +7,6 @@ if [ "${1#-}" != "$1" ]; then
 fi
 
 if [ "$1" = 'php-fpm' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
-	# Install the project the first time PHP is started
-	# After the installation, the following block can be deleted
-	if [ ! -f composer.json ]; then
-		rm -Rf tmp/
-		composer create-project "symfony/skeleton $SYMFONY_VERSION" tmp --stability="$STABILITY" --prefer-dist --no-progress --no-interaction --no-install
-
-		cd tmp
-		composer require "php:>=$PHP_VERSION"
-		composer config --json extra.symfony.docker 'true'
-		cp -Rp . ..
-		cd -
-
-		rm -Rf tmp/
-
-		if grep -q ^DATABASE_URL= .env; then
-			echo "To finish the installation please press Ctrl+C to stop Docker Compose and run: docker compose up --build --wait"
-			sleep infinity
-		fi
-	fi
-
 	if [ "$APP_ENV" != 'prod' ]; then
 		composer install --prefer-dist --no-progress --no-interaction
 	fi

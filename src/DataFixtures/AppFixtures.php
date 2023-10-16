@@ -18,8 +18,5 @@ class AppFixtures extends Fixture
     {
         $paypalMethod = (new Method)->setInternalKey('paypal')->setName("Paypal provider");
         $manager->persist($paypalMethod);
-
-        $adyenMethod = (new Method)->setInternalKey('adyen')->setName("Adyen provider");
-        $manager->persist($adyenMethod);
     }
 }
