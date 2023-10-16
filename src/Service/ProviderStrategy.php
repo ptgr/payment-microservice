@@ -22,19 +22,18 @@ class ProviderStrategy
     {
         return match ($method->getInternalKey()) {
             'paypal' => $this->container->get('paypal_facade'),
-            'adyen' => $this->container->get('adyen_facade'),
             default => throw new \InvalidArgumentException("There is no provider strategy for method_id " . $method->getId())
         };
     }
 
     public function exists(Method $method): bool
     {
-        return \in_array($method->getInternalKey(), ['paypal', 'adyen']);
+        return \in_array($method->getInternalKey(), ['paypal']);
     }
 
     public function getNotificationProviders(): \Generator
     {
-        $providers = ['paypal_facade', 'adyen_facade'];
+        $providers = ['paypal_facade'];
 
         foreach ($providers as $provider) {
             $providerInstance = $this->container->get($provider);

@@ -7,57 +7,6 @@
     "content-hash": "7672fce4e625b81bf2b418750087395b",
     "packages": [
         {
-            "name": "adyen/php-api-library",
-            "version": "13.0.5",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Adyen/adyen-php-api-library.git",
-                "reference": "084d0a33b2df720fbbea4816f0457a28c881e4d9"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Adyen/adyen-php-api-library/zipball/084d0a33b2df720fbbea4816f0457a28c881e4d9",
-                "reference": "084d0a33b2df720fbbea4816f0457a28c881e4d9",
-                "shasum": ""
-            },
-            "require": {
-                "ext-ctype": "*",
-                "ext-curl": "*",
-                "ext-json": "*",
-                "ext-mbstring": "*",
-                "ext-openssl": "*",
-                "monolog/monolog": "^1.16 || ^2.0",
-                "php": ">=7.3"
-            },
-            "require-dev": {
-                "dms/phpunit-arraysubset-asserts": "0.4.0",
-                "friendsofphp/php-cs-fixer": "*",
-                "php-coveralls/php-coveralls": "2.5.3",
-                "phpunit/phpunit": "9.5.24",
-                "squizlabs/php_codesniffer": "3.7.1"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Adyen\\": "src/Adyen/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "description": "A PHP client library for accessing Adyen APIs",
-            "homepage": "https://github.com/Adyen/adyen-php-api-library",
-            "keywords": [
-                "adyen"
-            ],
-            "support": {
-                "issues": "https://github.com/Adyen/adyen-php-api-library/issues",
-                "source": "https://github.com/Adyen/adyen-php-api-library/tree/13.0.5"
-            },
-            "time": "2023-03-08T07:28:42+00:00"
-        },
-        {
             "name": "doctrine/cache",
             "version": "2.2.0",
             "source": {
