@@ -2,11 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\MethodRepository;
+use App\Repository\ProviderRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: MethodRepository::class)]
-class Method
+#[ORM\Entity(repositoryClass: ProviderRepository::class)]
+class Provider
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

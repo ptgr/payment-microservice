@@ -6,42 +6,45 @@ use App\Interface\INotifiable;
 use App\Interface\IProviderNotification;
 use App\Interface\IProviderStrategy;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use App\Entity\Method;
+use App\Entity\Provider;
 use Doctrine\ORM\EntityManagerInterface;
 
 class ProviderStrategy
 {
+    private array $allProviders;
+
     public function __construct(
         private EntityManagerInterface $entityManager,
         private ContainerInterface $container
-    )
-    {
+    ) {
+        $this->allProviders = $entityManager->getRepository(Provider::class)->findAll();
     }
 
-    public function resolve(Method $method): IProviderStrategy
+    public function resolve(Provider $selectedProvider): IProviderStrategy
     {
-        return match ($method->getInternalKey()) {
-            'paypal' => $this->container->get('paypal_facade'),
-            default => throw new \InvalidArgumentException("There is no provider strategy for method_id " . $method->getId())
-        };
-    }
+        foreach ($this->allProviders as $provider) {
+            if ($provider->getInternalKey() === $selectedProvider->getInternalKey())
+                return $this->getContainer($provider);
+        }
 
-    public function exists(Method $method): bool
-    {
-        return \in_array($method->getInternalKey(), ['paypal']);
+        throw new \InvalidArgumentException("There is no provider strategy for provider_id " . $selectedProvider->getId());
     }
 
     public function getNotificationProviders(): \Generator
     {
-        $providers = ['paypal_facade'];
-
-        foreach ($providers as $provider) {
-            $providerInstance = $this->container->get($provider);
+        foreach ($this->allProviders as $provider) {
+            $providerInstance = $this->getContainer($provider);
 
             if (!$providerInstance instanceof IProviderNotification || !$providerInstance instanceof INotifiable)
                 continue;
 
             return yield $providerInstance;
         }
+    }
+
+    private function getContainer(Provider $provider): object|null
+    {
+        $containerName = \sprintf('%s_facade', $provider->getInternalKey());
+        return $this->container->get($containerName);
     }
 }

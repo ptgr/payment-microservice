@@ -23,9 +23,7 @@ class IsPaidController extends AbstractController
     #[Route('/api/v1/payment/is-paid/{token}', name: 'is_paid', methods: ['GET'])]
     public function index(Request $request, Token $token): JsonResponse
     {
-        $paymentRepository = $this->entityManager->getRepository(Payment::class);
-        $payment = $paymentRepository->findOneBy(['token' => $token->getId()]);
-
+        $payment = $this->entityManager->getRepository(Payment::class)->findOneBy(['token' => $token->getId()]);
         if ($payment === null)
             return new JsonResponse(['paid' => false, 'message' => 'This payment has not been paid yet.']);
 

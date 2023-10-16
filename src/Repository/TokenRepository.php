@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\Method;
+use App\Entity\Provider;
 use App\Entity\Token;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -14,19 +14,19 @@ class TokenRepository extends ServiceEntityRepository
         parent::__construct($registry, Token::class);
     }
 
-    public function generate(Method $method, string $credential): Token
+    public function generate(Provider $provider, string $credential): Token
     {
-        $this->getEntityManager()->getConnection()->executeQuery("SELECT pg_advisory_lock(:lockKey)", ['lockKey' => $method->getId()]);
+        $this->getEntityManager()->getConnection()->executeQuery("SELECT pg_advisory_lock(:lockKey)", ['lockKey' => $provider->getId()]);
 
         $tokenKey = "";
         do {
-            $tokenKey = $method->getId() . bin2hex(openssl_random_pseudo_bytes(20));
+            $tokenKey = $provider->getId() . bin2hex(openssl_random_pseudo_bytes(20));
             $tokenExistsCount = $this->count(['id' => $tokenKey]);
         } while ($tokenExistsCount > 0);
 
         $token = new Token();
         $token->setId($tokenKey);
-        $token->setMethod($method);
+        $token->setProvider($provider);
         $token->setAccountKey($credential);
 
         $this->getEntityManager()->persist($token);

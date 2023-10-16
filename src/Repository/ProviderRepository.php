@@ -2,14 +2,14 @@
 
 namespace App\Repository;
 
-use App\Entity\Method;
+use App\Entity\Provider;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-class MethodRepository extends ServiceEntityRepository
+class ProviderRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Method::class);
+        parent::__construct($registry, Provider::class);
     }
 }
