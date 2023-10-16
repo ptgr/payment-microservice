@@ -25,9 +25,14 @@ class PaymentRepository extends ServiceEntityRepository
 
     public function store(Token $token, float $amount, string $transactionNumber): void
     {
-        $paymentEntityCount = $this->getEntityManager()->getRepository(Payment::class)->count(['token' => $token->getId()]);
-        if ($paymentEntityCount !== 0)
+        $paymentEntity = $this->getEntityManager()->getRepository(Payment::class)->findOneBy(['token' => $token->getId()]);
+        
+        if ($paymentEntity !== null) {
+            $paymentEntity->setUpdatedAt();
+            $paymentEntity->setStatus(PaymentStatus::CAPTURED);
+            $this->getEntityManager()->flush();
             return;
+        }
 
         $paymentEntity = new Payment();
         $paymentEntity->setToken($token);

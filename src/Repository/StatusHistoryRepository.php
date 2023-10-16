@@ -14,13 +14,14 @@ class StatusHistoryRepository extends ServiceEntityRepository
         parent::__construct($registry, StatusHistory::class);
     }
 
-    public function create(StatusType $statusType, string $oldValue, string $newValue): void
+    public function prepare(StatusType $statusType, string $typeId, string $oldValue, string $newValue): StatusHistory
     {
         $statusHistory = new StatusHistory();
         $statusHistory->setType($statusType);
+        $statusHistory->setTypeId($typeId);
         $statusHistory->setOld($oldValue);
         $statusHistory->setNew($newValue);
 
-        $this->getEntityManager()->persist($statusHistory);
+        return $statusHistory;
     }
 }

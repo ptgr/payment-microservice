@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use App\Enum\PaymentStatus;
 use App\Repository\PaymentRepository;
-use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PaymentRepository::class)]
@@ -85,20 +84,6 @@ class Payment
     public function getStatus(): PaymentStatus
     {
         return $this->status;
-    }
-
-    #[ORM\PreUpdate]
-    public function onStatusChanged(PreUpdateEventArgs $args): void
-    {
-        if (!$args->hasChangedField('status'))
-            return;
-
-        $statusHistory = new StatusHistory();
-        $statusHistory->setType(StatusType::PAYMENT);
-        $statusHistory->setOld($args->getOldValue('status'));
-        $statusHistory->setNew($args->getNewValue('status'));
-
-        $args->getEntityManager()->persist($statusHistory);
     }
 
     public function setStatus(PaymentStatus $status): static

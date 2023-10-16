@@ -24,6 +24,10 @@ services:
         tags:
             - { name: kernel.event_listener, event: kernel.exception, method: onKernelException }
 
+    App\EventSubscriber\OnFlushListener:
+        tags:
+            - { name: doctrine.event_subscriber }
+
     # PROVIDER STRATEGY
     App\Service\ProviderStrategy:
         arguments:
