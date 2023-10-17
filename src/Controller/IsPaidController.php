@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use OpenApi\Annotations as OA;
 
 class IsPaidController extends AbstractController
 {
@@ -19,8 +20,31 @@ class IsPaidController extends AbstractController
     }
 
     #[Route('/api/v1/payment/is-paid/{token}', name: 'is_paid', methods: ['GET'])]
-    public function index(Request $request, Token $token): JsonResponse
+    /**
+     * @OA\Tag(name="Is paid")
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful response",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="paid", type="boolean", example=true, description="Indicates if the payment is paid."),
+     *             @OA\Property(property="paid_created_at", type="string", format="date-time", example="2023-10-16 16:53:00", description="Timestamp when the payment was made."),
+     *             @OA\Property(property="status", type="string", example="captured", description="Payment status (authorized, captured, or refunded)."),
+     *             @OA\Property(property="status_updated_at", type="string", format="date-time", example="2023-10-17 08:43:07", description="Timestamp when the payment status was last updated."),
+     *         )
+     *     ),
+     *       @OA\Response(
+     *         response=404,
+     *         description="Token not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Token not found.")
+     *         )
+     *     )
+     */
+    public function get(Request $request, ?Token $token): JsonResponse
     {
+        if ($token === null)
+            return new JsonResponse(['message' => 'Token not found.'], 404);
+
         $payment = $this->entityManager->getRepository(Payment::class)->findOneBy(['token' => $token->getId()]);
         if ($payment === null)
             return new JsonResponse(['paid' => false, 'message' => 'This payment has not been paid yet.']);

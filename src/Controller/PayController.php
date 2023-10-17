@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Token;
+use OpenApi\Annotations as OA;
 
 class PayController extends AbstractController
 {
@@ -22,6 +23,9 @@ class PayController extends AbstractController
     }
 
     #[Route('/api/v1/payment/pay/{token}', name: 'pay', methods: ['GET'])]
+    /**
+     * @OA\Tag(name="Redirect to payment provider page")
+     */
     public function pay(Request $request, ProviderStrategy $providerStrategy, ?Token $token = null): RedirectResponse
     {
         $processResult = null;

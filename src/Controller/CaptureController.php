@@ -12,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use OpenApi\Annotations as OA;
 
 class CaptureController extends AbstractController
 {
@@ -21,8 +22,14 @@ class CaptureController extends AbstractController
     ) {
     }
 
-    #[Route('/api/v1/payment/capture/{token}', name: 'capture')]
-    public function index(Request $request, ProviderStrategy $providerStrategy, ?Token $token = null): RedirectResponse
+    #[Route('/api/v1/payment/capture/{token}', name: 'capture', methods: ['GET', 'POST'])]
+    /**
+     * This request is triggered after a customer authorized the payment.
+     * It can be GET or POST and content of body depends of the provider.
+     * 
+     * @OA\Tag(name="Capture payment")
+     */
+    public function capture(Request $request, ProviderStrategy $providerStrategy, ?Token $token = null): RedirectResponse
     {
         $processResult = null;
         try {

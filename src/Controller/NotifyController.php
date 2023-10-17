@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use OpenApi\Annotations as OA;
 
 class NotifyController extends AbstractController
 {
@@ -21,8 +22,14 @@ class NotifyController extends AbstractController
     ) {
     }
 
-    #[Route('/api/v1/payment/notify/{token}', name: 'notify')]
-    public function index(Request $request, ProviderStrategy $providerStrategy, ?Token $token = null): JsonResponse
+    #[Route('/api/v1/payment/notify/{token}', name: 'notify', methods: ['GET', 'POST'])]
+    /**
+     * This request is triggered by payment provider (webhooks).
+     * It can be GET or POST and content of body depends of the provider.
+     * 
+     * @OA\Tag(name="Process payment notification")
+     */
+    public function notify(Request $request, ProviderStrategy $providerStrategy, ?Token $token = null): JsonResponse
     {
         try {
             $providerInstance = null;

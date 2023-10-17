@@ -7,7 +7,7 @@ use App\Repository\StatusHistoryRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: StatusHistoryRepository::class)]
-#[ORM\Index(columns: ["type", "type_id"])]
+#[ORM\Index(columns: ["type"])]
 class StatusHistory
 {
     #[ORM\Id]
@@ -18,8 +18,9 @@ class StatusHistory
     #[ORM\Column(enumType: StatusType::class)]
     private ?StatusType $type = null;
 
-    #[ORM\Column(length: 50)]
-    private string $typeId;
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private Token $token;
 
     #[ORM\Column(length: 100)]
     private ?string $old = null;
@@ -52,14 +53,14 @@ class StatusHistory
         return $this;
     }
 
-    public function getTypeId(): string
+    public function getToken(): Token
     {
-        return $this->typeId;
+        return $this->token;
     }
 
-    public function setTypeId(string $typeId): static
+    public function setToken(Token $token): static
     {
-        $this->typeId = $typeId;
+        $this->token = $token;
 
         return $this;
     }

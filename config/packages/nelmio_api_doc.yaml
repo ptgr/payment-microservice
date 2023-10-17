@@ -1,5 +1,7 @@
 nelmio_api_doc:
     documentation:
+        servers:
+          - url: http://localhost
         info:
             title: Payment microservice
             version: 1.0.0

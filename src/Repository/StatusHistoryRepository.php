@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Token;
 use App\Enum\StatusType;
 use App\Entity\StatusHistory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -14,11 +15,11 @@ class StatusHistoryRepository extends ServiceEntityRepository
         parent::__construct($registry, StatusHistory::class);
     }
 
-    public function prepare(StatusType $statusType, string $typeId, string $oldValue, string $newValue): StatusHistory
+    public function prepare(StatusType $statusType, Token $token, string $oldValue, string $newValue): StatusHistory
     {
         $statusHistory = new StatusHistory();
         $statusHistory->setType($statusType);
-        $statusHistory->setTypeId($typeId);
+        $statusHistory->setToken($token);
         $statusHistory->setOld($oldValue);
         $statusHistory->setNew($newValue);
 
