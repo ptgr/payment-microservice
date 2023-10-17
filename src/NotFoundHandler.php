@@ -13,7 +13,7 @@ final class NotFoundHandler
         if (!$event->getThrowable() instanceof NotFoundHttpException)
             return;
 
-        $response = new JsonResponse(['message' => $event->getThrowable()->getMessage()], 404);
+        $response = new JsonResponse(['message' => 'Resource not found'], 404);
 
         $event->setResponse($response);
         $event->stopPropagation();

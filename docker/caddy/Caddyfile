@@ -1,13 +1,15 @@
-:80 {
+ptgr.localhost:80 {
     root * /srv/app/public
     encode zstd gzip
+    file_server
     php_fastcgi unix//var/run/php/php-fpm.sock
     tls internal
 }
 
-:443 {
+ptgr.localhost:443 {
     root * /srv/app/public
     encode zstd gzip
+    file_server
     php_fastcgi unix//var/run/php/php-fpm.sock
     tls internal {
         on_demand

@@ -52,7 +52,8 @@ class StatusHistoryController extends AbstractController
      *                 example="unavailable"
      *             )
      *         )
-     *     ),
+     *     )
+     * ),
      * @OA\Response(
      *         response=404,
      *         description="Token not found",
@@ -60,7 +61,6 @@ class StatusHistoryController extends AbstractController
      *             @OA\Property(property="message", type="string", example="Token not found.")
      *         )
      *     )
-     * )
      */
     public function index(Request $request, ?Token $token): JsonResponse
     {
