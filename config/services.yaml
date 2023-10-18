@@ -50,10 +50,3 @@ services:
     App\Service\Provider\Paypal\Capture:
         arguments:
             $api: '@App\Service\Provider\Paypal\Api'
-
-when@test:
-    services:
-        App\Service\Provider\Paypal\Api:
-            public: true
-            arguments:
-                $params: '@parameter_bag'

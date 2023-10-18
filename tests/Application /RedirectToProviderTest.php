@@ -1,15 +1,13 @@
 <?php
 
-namespace App\Tests\Application\Paypal;
+namespace App\Tests\Application;
 
 use App\Entity\Provider;
 use App\Enum\TokenStatus;
 use App\Entity\Token;
-use App\Interface\IPaypalAPI;
-use App\Service\Provider\Paypal\Api;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class CaptureTest extends WebTestCase
+class RedirectToProviderTest extends WebTestCase
 {
     private ?\Doctrine\ORM\EntityManager $entityManager;
     private \Symfony\Bundle\FrameworkBundle\KernelBrowser $client;
@@ -29,25 +27,27 @@ class CaptureTest extends WebTestCase
         $this->entityManager = null;
     }
 
-    public function testSuccessCapture(): void
+    public function testNoToken(): void
+    {
+        $this->client->request('GET', '/api/v1/payment/pay/fsdf');
+
+        $response = $this->client->getResponse();
+        $this->assertSame(302, $response->getStatusCode());
+    }
+
+    public function testNoActiveToken(): void
     {
         $provider = $this->entityManager->getRepository(Provider::class)->findOneBy(['internal_key' => 'paypal']);
 
         $token = new Token;
-        $token->setId('test_capture_token');
+        $token->setId('test_pay_token');
         $token->setProvider($provider);
+        $token->setStatus(TokenStatus::UNAVAILABLE);
         $this->entityManager->persist($token);
-
-        $paypalApiMock = $this->createMock(IPaypalAPI::class);
-        $paypalApiMock->expects($this->once())->method('captureOrder')->willReturn([]);
-        $this->client->getContainer()->set(Api::class, $paypalApiMock);
         
-        $this->client->request('GET', '/api/v1/payment/capture/test_capture_token?token=paypal_token');
+        $this->client->request('GET', '/api/v1/payment/pay/test_capture_token');
 
         $response = $this->client->getResponse();
-        $token = $this->entityManager->getRepository(Token::class)->find($token->getId());
-
-        $this->assertEquals(TokenStatus::UNAVAILABLE->value, $token->getStatus()->value);
         $this->assertSame(302, $response->getStatusCode());
     }
 }

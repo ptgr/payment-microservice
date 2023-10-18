@@ -45,7 +45,7 @@ class ProviderUrl implements IProviderUrl
 
         $response = $this->api->createOrder($this->payload);
 
-        foreach ($response['links'] as $link) {
+        foreach ($response['links'] ?? [] as $link) {
             if ($link['rel'] === 'payer-action')
                 return $link['href'];
         }
