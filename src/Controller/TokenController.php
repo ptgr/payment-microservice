@@ -66,7 +66,7 @@ class TokenController extends AbstractController
      */
     public function get(Request $request, ProviderStrategy $providerStrategy): JsonResponse
     {
-        $payload = $request->toArray();
+        $payload = empty($request->getContent()) ? [] : $request->toArray();
         $tokenEntity = null;
 
         try {

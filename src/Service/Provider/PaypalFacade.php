@@ -49,7 +49,7 @@ class PaypalFacade implements IProviderStrategy, ICaptureable, INotifiable, IPro
 
     public function isProviderNotification(Request $request, ?string $token): bool
     {
-        $data = $request->toArray();
+        $data = empty($request->getContent()) ? [] : $request->toArray();
         if (!isset($data['resource']['custom_id']))
             return false;
 

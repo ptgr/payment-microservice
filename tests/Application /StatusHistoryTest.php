@@ -6,9 +6,10 @@ use App\Entity\Payment;
 use App\Entity\Provider;
 use App\Entity\Token;
 use App\Enum\PaymentStatus;
+use App\Enum\StatusType;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class IsPaidTest extends WebTestCase
+class StatusHistoryTest extends WebTestCase
 {
     private ?\Doctrine\ORM\EntityManager $entityManager;
     private \Symfony\Bundle\FrameworkBundle\KernelBrowser $client;
@@ -30,14 +31,14 @@ class IsPaidTest extends WebTestCase
 
     public function test404(): void
     {
-        $this->client->request('GET', '/api/v1/payment/is-paid/some_wrong_token');
+        $this->client->request('GET', '/api/v1/payment/history/some_wrong_token');
         $response = $this->client->getResponse();
 
         $this->assertSame(404, $response->getStatusCode());
         $this->assertSame('application/json', $response->headers->get('Content-Type'));
     }
 
-    public function testTokenIsNotPaid(): void
+    public function testNoHistory(): void
     {
         $provider = $this->entityManager->getRepository(Provider::class)->findOneBy(['internal_key' => 'paypal']);
 
@@ -47,14 +48,14 @@ class IsPaidTest extends WebTestCase
         $this->entityManager->persist($token);
         $this->entityManager->flush();
 
-        $this->client->request('GET', '/api/v1/payment/is-paid/test_token');
+        $this->client->request('GET', '/api/v1/payment/history/test_token');
         $response = $this->client->getResponse();
 
         $this->assertSame(200, $response->getStatusCode());
-        $this->assertFalse(json_decode($response->getContent(), true)['paid']);
+        $this->assertEmpty(json_decode($response->getContent(), true));
     }
 
-    public function testTokenIsPaid(): void
+    public function testGetHistory(): void
     {
         $provider = $this->entityManager->getRepository(Provider::class)->findOneBy(['internal_key' => 'paypal']);
 
@@ -72,14 +73,19 @@ class IsPaidTest extends WebTestCase
 
         $this->entityManager->flush();
 
-        $this->client->request('GET', '/api/v1/payment/is-paid/test_paid_token');
+        // Test onFlush event
+        $paymentEntity = $this->entityManager->getRepository(Payment::class)->find($payment->getId());
+        $paymentEntity->setStatus(PaymentStatus::REFUNDED);
+        $this->entityManager->flush();
+
+        $this->client->request('GET', '/api/v1/payment/history/test_paid_token');
         $response = $this->client->getResponse();
         $arrayResponse = json_decode($response->getContent(), true);
 
         $this->assertSame(200, $response->getStatusCode());
-        $this->assertTrue($arrayResponse['paid']);
-        $this->assertArrayHasKey('paid_created_at', $arrayResponse);
-        $this->assertArrayHasKey('status_updated_at', $arrayResponse);
-        $this->assertEquals(PaymentStatus::CAPTURED->value, $arrayResponse['status']);
+        $this->assertArrayHasKey('timestamp', $arrayResponse[0]);
+        $this->assertEquals(StatusType::PAYMENT->value, $arrayResponse[0]['type']);
+        $this->assertEquals(PaymentStatus::CAPTURED->value, $arrayResponse[0]['before']);
+        $this->assertEquals(PaymentStatus::REFUNDED->value, $arrayResponse[0]['after']);
     }
 }

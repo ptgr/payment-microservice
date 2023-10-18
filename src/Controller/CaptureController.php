@@ -46,7 +46,7 @@ class CaptureController extends AbstractController
             $providerFacade = $providerStrategy->resolve($token->getProvider());
             if (!$providerFacade instanceof ICaptureable)
                 return $this->redirect($this->getParameter('app.redirect_after_failure_payment'));
-
+            
             $payload = \array_merge($request->request->all(), $request->query->all());
             $processResult = $providerFacade->capture($token, $payload);
 

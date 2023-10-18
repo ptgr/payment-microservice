@@ -15,9 +15,9 @@ class PaymentRepository extends ServiceEntityRepository
         parent::__construct($registry, Payment::class);
     }
 
-    public function setAsRefund(string $transactionNumber): void
+    public function setAsRefund(Token $token, string $transactionNumber): void
     {
-        $paymentEntity = $this->getEntityManager()->getRepository(Payment::class)->findOneBy(['transaction_number' => $transactionNumber]);
+        $paymentEntity = $this->getEntityManager()->getRepository(Payment::class)->findOneBy(['token' => $token->getId(), 'transaction_number' => $transactionNumber]);
         $paymentEntity->setUpdatedAt();
         $paymentEntity->setStatus(PaymentStatus::REFUNDED);
         $this->getEntityManager()->flush();
@@ -25,7 +25,7 @@ class PaymentRepository extends ServiceEntityRepository
 
     public function store(Token $token, float $amount, string $transactionNumber): void
     {
-        $paymentEntity = $this->getEntityManager()->getRepository(Payment::class)->findOneBy(['token' => $token->getId()]);
+        $paymentEntity = $this->getEntityManager()->getRepository(Payment::class)->findOneBy(['token' => $token->getId(), 'transaction_number' => $transactionNumber]);
         
         if ($paymentEntity !== null) {
             $paymentEntity->setUpdatedAt();

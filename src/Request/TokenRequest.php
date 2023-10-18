@@ -27,7 +27,7 @@ class TokenRequest extends AbstractRequest
                         'external_id' => [new Assert\Type('integer'), new Assert\Positive, new Assert\NotBlank],
                         'name' => [new Assert\Type('string'), new Assert\NotBlank()],
                         'quantity' => [new Assert\Type('integer'), new Assert\Positive, new Assert\NotBlank],
-                        'price' => [new Assert\Type('float'), new Assert\NotBlank()],
+                        'price' => [new Assert\Type('numeric'), new Assert\NotBlank()],
                         'discount' => [new Assert\Type('integer'), new Assert\PositiveOrZero, new Assert\NotBlank],
                         'shipping' => [new Assert\Type('integer'), new Assert\PositiveOrZero, new Assert\NotBlank],
                     ])

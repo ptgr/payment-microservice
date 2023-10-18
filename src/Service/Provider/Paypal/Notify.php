@@ -40,7 +40,7 @@ class Notify implements INotifiable, INotifyToken
         $paymentRepository = $this->entityManager->getRepository(Payment::class);
 
         if (\in_array($eventType, self::REFUND_EVENT_TYPES) && !empty($notifyItem['resource']['id']))
-            $paymentRepository->setAsRefund($notifyItem['resource']['id']);
+            $paymentRepository->setAsRefund($this->token, $notifyItem['resource']['id']);
 
         if (\in_array($eventType, self::COMPLETE_EVENT_TYPES) && !empty($notifyItem['resource']['id']) && !empty($notifyItem['resource']['amount']['value']))
             $paymentRepository->store($this->token, $notifyItem['resource']['amount']['value'], $notifyItem['resource']['id']);
