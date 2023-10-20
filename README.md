@@ -1,4 +1,4 @@
-Example of a lightweight payment microservice
+Example of a lightweight payment microservice written in PHP (Symfony), Caddy and PostgreSQL.
 
 **FEATURES**
 - Payment gateway integration (currently only Paypal is supported)
