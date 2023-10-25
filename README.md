@@ -11,14 +11,15 @@ Example of a lightweight payment microservice written in PHP (Symfony), Caddy an
 *Docker*
   
 **INSTALLATION**
-1) Create copy of **.env.example** and rename it to **.env**
-2) Open the **.env** file and change these values according to your credentials  
+1) Clone repository using `git clone https://github.com/ptgr/payment-microservice.git`
+2) Create copy of **.env.example** and rename it to **.env**
+3) Open the **.env** file and change these values according to your credentials  
 	 *PAYPAL_ACCOUNT_SANDBOX,*  
 	 *PAYPAL_ACCOUNT_SANDBOX_SECRET,*  
 	 *POSTGRES_PASSWORD,*  
 	 *[REPLACE_PASSWORD]*  
-3) Open terminal and run `docker-compose up`
-4) Open PHP container and run initial data loader: `php bin/console doctrine:fixtures:load`
+4) Open terminal and run `docker-compose up`
+5) Open PHP container and run initial data loader: `php bin/console doctrine:fixtures:load`
    
 **API DOCS**   
 SWAGGER UI - https://ptgr.localhost/api/doc
