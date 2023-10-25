@@ -7,19 +7,10 @@ ENV APP_ENV=dev XDEBUG_MODE=off
 ENV PATH="${PATH}:/root/.composer/vendor/bin"
 
 WORKDIR /srv/app
-RUN apk add --no-cache \
-		acl \
-		fcgi \
-		file \
-		gettext \
-	;
+RUN apk add --no-cache acl fcgi file gettext
 
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
-RUN set -eux; \
-	install-php-extensions \
-		xdebug \
-		pdo_pgsql \
-	;
+RUN set -eux; install-php-extensions xdebug-3.2.2 pdo_pgsql
 
 COPY --link docker/php/conf.d/app.dev.ini $PHP_INI_DIR/conf.d/
 
